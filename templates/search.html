@@ -12,12 +12,27 @@
         <button type="submit">Search</button>
     </form>
     
-    {% if result %}
-        <div class="result-box">
-            <h2>Search Result</h2>
-            <p><strong>Name:</strong> {{ result.name }}</p>
-            <p><strong>Release Date:</strong> {{ result.release_date }}</p>
-            <p><strong>Reviews:</strong> {{ result.reviews }}</p>
+    {% if results %}
+        <h2>Search Results ({{ results|length }} found) for "{{game_name}}"</h2>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Release Date</th>
+                        <th>Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for game in results %}
+                    <tr>
+                        <td>{{ game[0] }}</td>
+                        <td>{{ game[1] }}</td>
+                        <td>{{ game[2] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     {% endif %}
 {% endblock %}

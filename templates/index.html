@@ -5,7 +5,7 @@
 {% block content %}
     <h1>Steam Game Database</h1>
     <p>Welcome to the Steam game database management system!</p>
-    
+    <br>
     <h2>All Games</h2>
     {% if games %}
         <div class="table-container">
@@ -37,7 +37,7 @@
         <select name="action" required>
             <option value="">Select an action...</option>
             <option value="count">Count all games</option>
-            <option value="oldest">Find newest game</option>
+            <option value="newest">Find newest games</option>
         </select>
         <br>
         <button type="submit">Execute</button>

@@ -59,30 +59,27 @@ def search():
         
         if not game_name:
             flash("Please enter the name of a game", "warning")
-            return render_template("search.html", result=None)
+            return render_template("search.html", result=None, game_name=None)
         
         try:
             with get_db_connection() as db:
                 cursor = db.cursor()
-                query = "SELECT name, release_date, price FROM steam WHERE name = %s"
-                cursor.execute(query, [game_name])
-                result = cursor.fetchone()
+                query = "SELECT name, release_date, price FROM steam WHERE name ILIKE %s ORDER BY name"
+                search_pattern = f"%{game_name}%"
+                cursor.execute(query, [search_pattern])
+                results = cursor.fetchall()
             
-            if result:
-                return render_template("search.html", result={
-                    'name': result[0],
-                    'release_date': result[1],
-                    'reviews': result[2]
-                })
+            if results:
+                return render_template("search.html", results=results, game_name=game_name)
             else:
                 flash(f"No game found with name: {game_name}", "info")
-                return render_template("search.html", result=None)
+                return render_template("search.html", results=None, game_name=game_name)
         
         except pg8000.Error as e:
             flash(f"Database error: {str(e)}", "error")
-            return render_template("search.html", result=None)
+            return render_template("search.html", results=None, game_name=None)
     
-    return render_template("search.html", result=None)
+    return render_template("search.html", results=None, game_name=None)
 
 @app.route("/result", methods=['POST'])
 def result():
@@ -100,12 +97,12 @@ def result():
                 return render_template('result.html', 
                                      message=f"Total games in database: {count}")
             
-            elif action == 'oldest':
-                cursor.execute("SELECT name, release_date, price FROM steam ORDER BY release_date DESC LIMIT 1")
-                result = cursor.fetchone()
+            elif action == 'newest':
+                cursor.execute("SELECT name, release_date, price FROM steam ORDER BY release_date DESC LIMIT 5")
+                result = cursor.fetchall()
                 if result:
                     return render_template('result.html',
-                                         message=f"Newest game: {result[0]} ({result[1]}, {result[2]})")
+                                         games=result)
                 else:
                     return render_template('result.html', message="No games found")
             
