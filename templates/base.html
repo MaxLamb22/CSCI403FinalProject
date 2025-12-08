@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Steam Game Database{% endblock %}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #f4f4f4;
+        }
+        nav {
+            background: #333;
+            color: #fff;
+            padding: 1rem;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        nav a {
+            color: #fff;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            margin-right: 10px;
+        }
+        nav a:hover { background: #555; border-radius: 3px; }
+        .container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        h1, h2 { color: #333; margin-bottom: 15px; }
+        .flash-messages {
+            margin-bottom: 20px;
+        }
+        .flash {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 3px;
+        }
+        .flash.error { background: #ffebee; color: #c62828; border-left: 4px solid #c62828; }
+        .flash.warning { background: #fff3e0; color: #ef6c00; border-left: 4px solid #ef6c00; }
+        .flash.info { background: #e3f2fd; color: #1565c0; border-left: 4px solid #1565c0; }
+        .flash.success { background: #e8f5e9; color: #2e7d32; border-left: 4px solid #2e7d32; }
+        .table-container {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #333;
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        tr:hover { background-color: #f5f5f5; }
+        form {
+            margin: 20px 0;
+        }
+        input[type="text"], select {
+            padding: 10px;
+            width: 100%;
+            max-width: 400px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+        button, input[type="submit"] {
+            background: #333;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover, input[type="submit"]:hover {
+            background: #555;
+        }
+        .result-box {
+            background: #e8f5e9;
+            padding: 20px;
+            border-radius: 5px;
+            border-left: 4px solid #2e7d32;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="{{ url_for('home') }}">Home</a>
+        <a href="{{ url_for('search') }}">Search</a>
+    </nav>
+    
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

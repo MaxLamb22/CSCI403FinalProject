@@ -1,1 +1,45 @@
-<!-- Will update page as needed -->
+{% extends "base.html" %}
+
+{% block title %}Home - Steam Game Database{% endblock %}
+
+{% block content %}
+    <h1>Steam Game Database</h1>
+    <p>Welcome to the Steam game database management system!</p>
+    
+    <h2>All Games</h2>
+    {% if games %}
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Release Date</th>
+                        <th>Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for game in games %}
+                    <tr>
+                        <td>{{ game[0] }}</td>
+                        <td>{{ game[1] }}</td>
+                        <td>{{ game[2] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p>No games found in the database.</p>
+    {% endif %}
+    
+    <h2>Quick Actions</h2>
+    <form action="{{ url_for('result') }}" method="post">
+        <select name="action" required>
+            <option value="">Select an action...</option>
+            <option value="count">Count all games</option>
+            <option value="oldest">Find newest game</option>
+        </select>
+        <br>
+        <button type="submit">Execute</button>
+    </form>
+{% endblock %}
