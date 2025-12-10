@@ -41,7 +41,7 @@ def home():
         with get_db_connection() as db:
             cursor = db.cursor()
             cursor.execute("SET search_path TO maxwell_lamb")
-            cursor.execute("SELECT name, release_date, price FROM steam ORDER BY appid")
+            cursor.execute("SELECT name, release_date, price, ROUND(((positive_ratings::float/(positive_ratings+negative_ratings))*100)::numeric, 2) AS reviews FROM steam ORDER BY appid")
             games = cursor.fetchall()
         
         return render_template("index.html", games=games)
@@ -66,7 +66,7 @@ def search():
             with get_db_connection() as db:
                 cursor = db.cursor()
                 cursor.execute("SET search_path TO maxwell_lamb")
-                query = "SELECT name, release_date, price FROM steam WHERE name ILIKE %s ORDER BY appid"
+                query = "SELECT name, release_date, price, ROUND(((positive_ratings::float/(positive_ratings+negative_ratings))*100)::numeric, 2) AS reviews FROM steam WHERE name ILIKE %s ORDER BY appid"
                 search_pattern = f"%{game_name}%"
                 cursor.execute(query, [search_pattern])
                 results = cursor.fetchall()
@@ -87,6 +87,7 @@ def search():
 def result():
     """Process form data and display results"""
     try:
+        last_page = request.referrer or url_for('home')
         # Get form data
         action = request.form.get('action')
         game_name = request.form.get("game_name")
@@ -95,7 +96,7 @@ def result():
             search_pattern = f"%{game_name}%"
             searched = """
                 WITH searched AS (
-                            SELECT name, release_date, price, positive_ratings, negative_ratings
+                            SELECT name, release_date, price, positive_ratings, negative_ratings, ROUND(((positive_ratings::float/(positive_ratings+negative_ratings))*100)::numeric, 2) AS reviews
                             FROM steam 
                             WHERE name ILIKE %s
                         )"""
@@ -107,39 +108,40 @@ def result():
             if action == 'Count':
                 if game_name:
                     cursor.execute(searched + "SELECT COUNT(*) FROM searched", [search_pattern])
+                    count = cursor.fetchone()[0]
+                    return render_template('result.html', 
+                                     message=f"Total games found: {count}", last_page=last_page)
                 else:
                     cursor.execute("SELECT COUNT(*) FROM steam")
-                count = cursor.fetchone()[0]
-                return render_template('result.html', 
-                                     message=f"Total games in database: {count}")
+                    count = cursor.fetchone()[0]
+                    return render_template('result.html', 
+                                     message=f"Total games in database: {count}", last_page=last_page)
             
             elif action == 'By Newest':
                 if game_name:
-                    cursor.execute(searched + "SELECT * FROM searched ORDER BY release_date DESC", [search_pattern])
+                    cursor.execute(searched + "SELECT name, release_data, price, ROUND(((positive_ratings::float/(positive_ratings+negative_ratings))*100)::numeric, 2) AS reviews FROM searched ORDER BY release_date DESC", [search_pattern])
                 else:
-                    cursor.execute("SELECT name, release_date, price FROM steam ORDER BY release_date DESC")
+                    cursor.execute("SELECT name, release_date, price, ROUND(((positive_ratings::float/(positive_ratings+negative_ratings))*100)::numeric, 2) AS reviews FROM steam ORDER BY release_date DESC")
                 result = cursor.fetchall()
                 if result:
-                    return render_template('result.html',
-                                         games=result)
+                    return render_template('result.html', games=result, last_page=last_page)
                 else:
-                    return render_template('result.html', message="No games found")
+                    return render_template('result.html', message="No games found", last_page=last_page)
             
             elif action == 'By Rating':
                 if game_name:
                     search_pattern = f"%{game_name}%"
-                    cursor.execute(searched + "SELECT name, release_date, price FROM searched ORDER BY (positive_ratings/(positive_ratings+negative_ratings)) DESC", [search_pattern])
+                    cursor.execute(searched + "SELECT name, release_date, price, ROUND(((positive_ratings::float/(positive_ratings+negative_ratings))*100)::numeric, 2) AS reviews FROM searched ORDER BY (positive_ratings/(positive_ratings+negative_ratings)) DESC", [search_pattern])
                 else:
-                    cursor.execute("SELECT name, release_date, price FROM steam ORDER BY (positive_ratings/(positive_ratings+negative_ratings)) DESC")
+                    cursor.execute("SELECT name, release_date, price, ROUND(((positive_ratings::float/(positive_ratings+negative_ratings))*100)::numeric, 2) AS reviews FROM steam ORDER BY (positive_ratings/(positive_ratings+negative_ratings)) DESC")
                 result = cursor.fetchall()
                 if result:
-                    return render_template('result.html',
-                                         games=result)
+                    return render_template('result.html', games=result, last_page=last_page)
                 else:
-                    return render_template('result.html', message="No games found")
+                    return render_template('result.html', message="No games found", last_page=last_page)
             
             else:
-                return render_template('result.html', message="Unknown action")
+                return render_template('result.html', message="Unknown action", last_page=last_page)
     
     except pg8000.Error as e:
         flash(f"Database error: {str(e)}", "error")
