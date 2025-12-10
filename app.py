@@ -66,7 +66,7 @@ def search():
             with get_db_connection() as db:
                 cursor = db.cursor()
                 cursor.execute("SET search_path TO maxwell_lamb")
-                query = "SELECT name, release_date, price FROM steam WHERE name ILIKE %s ORDER BY (positive_ratings-negative_ratings) DESC"
+                query = "SELECT name, release_date, price FROM steam WHERE name ILIKE %s ORDER BY appid DESC"
                 search_pattern = f"%{game_name}%"
                 cursor.execute(query, [search_pattern])
                 results = cursor.fetchall()
