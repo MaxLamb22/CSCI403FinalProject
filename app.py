@@ -91,21 +91,22 @@ def result():
         action = request.form.get('action')
         game_name = request.form.get("game_name")
         
+        if game_name:
+            search_pattern = f"%{game_name}%"
+            searched = """
+                WITH searched AS (
+                            SELECT name, release_date, price, positive_ratings, negative_ratings
+                            FROM steam 
+                            WHERE name ILIKE %s
+                        )"""
+        
         with get_db_connection() as db:
             cursor = db.cursor()
             cursor.execute("SET search_path TO maxwell_lamb")
 
             if action == 'Count':
                 if game_name:
-                    search_pattern = f"%{game_name}%"
-                    cursor.execute("""
-                        WITH searched AS (
-                            SELECT name, release_date, price 
-                            FROM steam 
-                            WHERE name ILIKE %s
-                        )
-                        SELECT COUNT(*) FROM searched
-                    """, [search_pattern])
+                    cursor.execute(searched + "SELECT COUNT(*) FROM searched", [search_pattern])
                 else:
                     cursor.execute("SELECT COUNT(*) FROM steam")
                 count = cursor.fetchone()[0]
@@ -114,16 +115,7 @@ def result():
             
             elif action == 'By Newest':
                 if game_name:
-                    search_pattern = f"%{game_name}%"
-                    cursor.execute("""
-                            WITH searched AS (
-                                SELECT name, release_date, price 
-                                FROM steam 
-                                WHERE name ILIKE %s
-                        )
-                        SELECT * FROM searched
-                        ORDER BY release_date DESC
-                    """, [search_pattern])
+                    cursor.execute(searched + "SELECT * FROM searched ORDER BY release_date DESC", [search_pattern])
                 else:
                     cursor.execute("SELECT name, release_date, price FROM steam ORDER BY release_date DESC")
                 result = cursor.fetchall()
@@ -136,15 +128,7 @@ def result():
             elif action == 'By Rating':
                 if game_name:
                     search_pattern = f"%{game_name}%"
-                    cursor.execute("""
-                                WITH searched AS (
-                                    SELECT name, release_date, price, positive_ratings, negative_ratings
-                                    FROM steam 
-                                    WHERE name ILIKE %s
-                                )
-                                SELECT name, release_date, price FROM searched
-                                ORDER BY (positive_ratings-negative_ratings) DESC
-                            """, [search_pattern])
+                    cursor.execute(searched + "SELECT name, release_date, price FROM searched ORDER BY (positive_ratings-negative_ratings) DESC", [search_pattern])
                 else:
                     cursor.execute("SELECT name, release_date, price FROM steam ORDER BY (positive_ratings-negative_ratings) DESC")
                 result = cursor.fetchall()
