@@ -36,8 +36,9 @@
     <form action="{{ url_for('result') }}" method="post">
         <select name="action" required>
             <option value="">Select an action...</option>
-            <option value="count">Count all games</option>
-            <option value="newest">Find newest games</option>
+            <option value="Count">Count all games</option>
+            <option value="By Newest">List games by newest first</option>
+            <option value="By Rating">List games by rating</option>
         </select>
         <br>
         <button type="submit">Execute</button>

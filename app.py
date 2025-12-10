@@ -91,14 +91,23 @@ def result():
         with get_db_connection() as db:
             cursor = db.cursor()
             
-            if action == 'count':
+            if action == 'Count':
                 cursor.execute("SELECT COUNT(*) FROM steam")
                 count = cursor.fetchone()[0]
                 return render_template('result.html', 
                                      message=f"Total games in database: {count}")
             
-            elif action == 'newest':
-                cursor.execute("SELECT name, release_date, price FROM steam ORDER BY release_date DESC LIMIT 5")
+            elif action == 'By Newest':
+                cursor.execute("SELECT name, release_date, price FROM steam ORDER BY release_date DESC")
+                result = cursor.fetchall()
+                if result:
+                    return render_template('result.html',
+                                         games=result)
+                else:
+                    return render_template('result.html', message="No games found")
+            
+            elif action == 'By Rating':
+                cursor.execute("SELECT name, release_date, price FROM steam ORDER BY (positive_ratings/negative_ratings) DESC")
                 result = cursor.fetchall()
                 if result:
                     return render_template('result.html',
