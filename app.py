@@ -64,6 +64,7 @@ def search():
         try:
             with get_db_connection() as db:
                 cursor = db.cursor()
+                cursor.execute("SET search_path TO maxwell_lamb")
                 query = "SELECT name, release_date, price FROM steam WHERE name ILIKE %s ORDER BY name"
                 search_pattern = f"%{game_name}%"
                 cursor.execute(query, [search_pattern])
@@ -90,6 +91,7 @@ def result():
         
         with get_db_connection() as db:
             cursor = db.cursor()
+            cursor.execute("SET search_path TO maxwell_lamb")
             
             if action == 'Count':
                 cursor.execute("SELECT COUNT(*) FROM steam")
