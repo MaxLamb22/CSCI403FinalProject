@@ -1,6 +1,7 @@
 import getpass
 import pg8000
 import os
+import json
 from flask import Flask, render_template, request, flash, redirect, url_for
 from contextlib import contextmanager
 from dotenv import load_dotenv
@@ -88,19 +89,43 @@ def result():
     try:
         # Get form data
         action = request.form.get('action')
+        game_name = request.form.get("game_name")
         
         with get_db_connection() as db:
             cursor = db.cursor()
             cursor.execute("SET search_path TO maxwell_lamb")
-            
+
             if action == 'Count':
-                cursor.execute("SELECT COUNT(*) FROM steam")
+                if game_name:
+                    search_pattern = f"%{game_name}%"
+                    cursor.execute("""
+                        WITH searched AS (
+                            SELECT name, release_date, price 
+                            FROM steam 
+                            WHERE name ILIKE %s
+                        )
+                        SELECT COUNT(*) FROM searched
+                    """, [search_pattern])
+                else:
+                    cursor.execute("SELECT COUNT(*) FROM steam")
                 count = cursor.fetchone()[0]
                 return render_template('result.html', 
                                      message=f"Total games in database: {count}")
             
             elif action == 'By Newest':
-                cursor.execute("SELECT name, release_date, price FROM steam ORDER BY release_date DESC")
+                if game_name:
+                    search_pattern = f"%{game_name}%"
+                    cursor.execute("""
+                            WITH searched AS (
+                                SELECT name, release_date, price 
+                                FROM steam 
+                                WHERE name ILIKE %s
+                        )
+                        SELECT * FROM searched
+                        ORDER BY release_date DESC
+                    """, [search_pattern])
+                else:
+                    cursor.execute("SELECT name, release_date, price FROM steam ORDER BY release_date DESC")
                 result = cursor.fetchall()
                 if result:
                     return render_template('result.html',
@@ -109,7 +134,19 @@ def result():
                     return render_template('result.html', message="No games found")
             
             elif action == 'By Rating':
-                cursor.execute("SELECT name, release_date, price FROM steam ORDER BY (positive_ratings-negative_ratings) DESC")
+                if game_name:
+                    search_pattern = f"%{game_name}%"
+                    cursor.execute("""
+                                WITH searched AS (
+                                    SELECT name, release_date, price, positive_ratings, negative_ratings
+                                    FROM steam 
+                                    WHERE name ILIKE %s
+                                )
+                                SELECT name, release_date, price FROM searched
+                                ORDER BY (positive_ratings-negative_ratings) DESC
+                            """, [search_pattern])
+                else:
+                    cursor.execute("SELECT name, release_date, price FROM steam ORDER BY (positive_ratings-negative_ratings) DESC")
                 result = cursor.fetchall()
                 if result:
                     return render_template('result.html',

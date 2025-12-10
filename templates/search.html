@@ -34,5 +34,22 @@
                 </tbody>
             </table>
         </div>
+
+        <h2>Quick Actions</h2>
+        <form action="{{ url_for('result') }}" method="post">
+            <input type="hidden" name="game_name" value="{{ game_name }}">
+
+            <select name="action" required>
+                <option value="">Select an action...</option>
+                <option value="Count">Count all games</option>
+                <option value="By Newest">List games by newest first</option>
+                <option value="By Rating">List games by rating</option>
+            </select>
+            <br>
+            <button type="submit">Execute</button>
+        </form>
     {% endif %}
+    
+    
+
 {% endblock %}
