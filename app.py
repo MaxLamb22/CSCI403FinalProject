@@ -145,6 +145,37 @@ def result():
         flash(f"Database error: {str(e)}", "error")
         return redirect(url_for('home'))
 
+@app.route("/modify", methods=['GET', 'POST'])
+def modify():
+    """Search for a specific game"""
+    if request.method == 'POST':
+        game_name = request.form.get('game_name', '').strip()
+        
+        if not game_name:
+            flash("Please enter the name of a game", "warning")
+            return render_template("modify.html", result=None, game_name=None)
+        
+        try:
+            with get_db_connection() as db:
+                cursor = db.cursor()
+                cursor.execute("SET search_path TO maxwell_lamb")
+                query = "SELECT name, release_date, price FROM steam WHERE name ILIKE %s ORDER BY appid"
+                search_pattern = f"%{game_name}%"
+                cursor.execute(query, [search_pattern])
+                results = cursor.fetchall()
+            
+            if results:
+                return render_template("modify.html", results=results, game_name=game_name)
+            else:
+                flash(f"No game found with name: {game_name}", "info")
+                return render_template("modify.html", results=None, game_name=game_name)
+        
+        except pg8000.Error as e:
+            flash(f"Database error: {str(e)}", "error")
+            return render_template("modify.html", results=None, game_name=None)
+    
+    return render_template("modify.html", results=None, game_name=None)        
+
 @app.errorhandler(404)
 def not_found(e):
     return render_template('404.html'), 404
