@@ -107,7 +107,7 @@ def result():
                     return render_template('result.html', message="No games found")
             
             elif action == 'By Rating':
-                cursor.execute("SELECT name, release_date, price FROM steam ORDER BY (positive_ratings/negative_ratings) DESC")
+                cursor.execute("SELECT name, release_date, price FROM steam ORDER BY (positive_ratings-negative_ratings) DESC")
                 result = cursor.fetchall()
                 if result:
                     return render_template('result.html',
