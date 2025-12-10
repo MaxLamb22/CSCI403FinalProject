@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Modify - Steam Game Database{% endblock %}
+
+{% block content %}
+    <h1>Search for a Game</h1>
+    
+    <form method="post">
+        <label for="game_name">Game Name:</label>
+        <input type="text" id="game_name" name="game_name" placeholder="Enter game name" required>
+        <br>
+        <button type="submit">Search</button>
+    </form>
+    
+    {% if results %}
+        <h2>Search Results ({{ results|length }} found) for "{{game_name}}"</h2>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Release Date</th>
+                        <th>Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for game in results %}
+                    <tr>
+                        <td>{{ game[0] }}</td>
+                        <td>{{ game[1] }}</td>
+                        <td>{{ game[2] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <h2>Quick Actions</h2>
+        <form action="{{ url_for('result') }}" method="post">
+            <input type="hidden" name="game_name" value="{{ game_name }}">
+
+            <select name="action" required>
+                <option value="">Select an action...</option>
+                <option value="Count">Count all games</option>
+                <option value="By Newest">List games by newest first</option>
+                <option value="By Rating">List games by rating</option>
+            </select>
+            <br>
+            <button type="submit">Execute</button>
+        </form>
+    {% endif %}
+    
+    
+
+{% endblock %}
