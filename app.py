@@ -140,6 +140,42 @@ def result():
                 else:
                     return render_template('result.html', message="No games found", last_page=last_page)
             
+            elif action == 'By Price':
+                if game_name:
+                    search_pattern = f"%{game_name}%"
+                    cursor.execute(searched + "SELECT name, release_date, price, ROUND(((positive_ratings::float/(positive_ratings+negative_ratings))*100)::numeric, 2) AS reviews FROM searched ORDER BY price", [search_pattern])
+                else:
+                    cursor.execute("SELECT name, release_date, price, ROUND(((positive_ratings::float/(positive_ratings+negative_ratings))*100)::numeric, 2) AS reviews FROM steam ORDER BY price")
+                result = cursor.fetchall()
+                if result:
+                    return render_template('result.html', games=result, last_page=last_page)
+                else:
+                    return render_template('result.html', message="No games found", last_page=last_page)
+            
+            elif action == 'By Player Count':
+                if game_name:
+                    search_pattern = f"%{game_name}%"
+                    cursor.execute(searched + "SELECT name, release_date, price, ROUND(((positive_ratings::float/(positive_ratings+negative_ratings))*100)::numeric, 2) AS reviews FROM searched ORDER BY owners DESC", [search_pattern])
+                else:
+                    cursor.execute("SELECT name, release_date, price, ROUND(((positive_ratings::float/(positive_ratings+negative_ratings))*100)::numeric, 2) AS reviews FROM steam ORDER BY owners DESC")
+                result = cursor.fetchall()
+                if result:
+                    return render_template('result.html', games=result, last_page=last_page)
+                else:
+                    return render_template('result.html', message="No games found", last_page=last_page)
+                
+            elif action == 'By Name':
+                if game_name:
+                    search_pattern = f"%{game_name}%"
+                    cursor.execute(searched + "SELECT name, release_date, price, ROUND(((positive_ratings::float/(positive_ratings+negative_ratings))*100)::numeric, 2) AS reviews FROM searched ORDER BY name", [search_pattern])
+                else:
+                    cursor.execute("SELECT name, release_date, price, ROUND(((positive_ratings::float/(positive_ratings+negative_ratings))*100)::numeric, 2) AS reviews FROM steam ORDER BY name")
+                result = cursor.fetchall()
+                if result:
+                    return render_template('result.html', games=result, last_page=last_page)
+                else:
+                    return render_template('result.html', message="No games found", last_page=last_page)
+            
             else:
                 return render_template('result.html', message="Unknown action", last_page=last_page)
     
