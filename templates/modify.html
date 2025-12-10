@@ -3,7 +3,7 @@
 {% block title %}Modify - Steam Game Database{% endblock %}
 
 {% block content %}
-    <h1>Search for a Game</h1>
+    <h1>Add a Score for a Game</h1>
     
     <form method="post">
         <label for="game_name">Game Name:</label>
@@ -19,8 +19,10 @@
                 <thead>
                     <tr>
                         <th>Name</th>
-                        <th>Release Date</th>
-                        <th>Price</th>
+                        <th>Positive Ratings</th>
+                        <th>Negative Ratings</th>
+                        <th>Reviews (%)</th>
+                        <th>Modify</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -29,25 +31,42 @@
                         <td>{{ game[0] }}</td>
                         <td>{{ game[1] }}</td>
                         <td>{{ game[2] }}</td>
+                        <td>{{ game[3] }}</td>
+                        <td>
+                            <form action="{{ url_for('update_rating') }}" method="post" style="display:inline;">
+                                <input type="hidden" name="game_name" value="{{ game[0] }}">
+                                <input type="hidden" name="field" value="positive_add">
+                                <input type="hidden" name="search_term" value="{{ game_name }}">
+                                <button type="submit">+ Positive</button>
+                            </form>
+
+                            <form action="{{ url_for('update_rating') }}" method="post" style="display:inline;">
+                                <input type="hidden" name="game_name" value="{{ game[0] }}">
+                                <input type="hidden" name="field" value="positive_remove">
+                                <input type="hidden" name="search_term" value="{{ game_name }}">
+                                <button type="submit">- Positive</button>
+                            </form>
+
+                            <form action="{{ url_for('update_rating') }}" method="post" style="display:inline;">
+                                <input type="hidden" name="game_name" value="{{ game[0] }}">
+                                <input type="hidden" name="field" value="negative_add">
+                                <input type="hidden" name="search_term" value="{{ game_name }}">
+                                <button type="submit">+ Negative</button>
+                            </form>
+
+                            <form action="{{ url_for('update_rating') }}" method="post" style="display:inline;">
+                                <input type="hidden" name="game_name" value="{{ game[0] }}">
+                                <input type="hidden" name="field" value="negative_remove">
+                                <input type="hidden" name="search_term" value="{{ game_name }}">
+                                <button type="submit">- Negative</button>
+                            </form>
+                    </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
 
-        <h2>Quick Actions</h2>
-        <form action="{{ url_for('result') }}" method="post">
-            <input type="hidden" name="game_name" value="{{ game_name }}">
-
-            <select name="action" required>
-                <option value="">Select an action...</option>
-                <option value="Count">Count all games</option>
-                <option value="By Newest">List games by newest first</option>
-                <option value="By Rating">List games by rating</option>
-            </select>
-            <br>
-            <button type="submit">Execute</button>
-        </form>
     {% endif %}
     
     

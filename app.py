@@ -128,9 +128,9 @@ def result():
             elif action == 'By Rating':
                 if game_name:
                     search_pattern = f"%{game_name}%"
-                    cursor.execute(searched + "SELECT name, release_date, price FROM searched ORDER BY (positive_ratings-negative_ratings) DESC", [search_pattern])
+                    cursor.execute(searched + "SELECT name, release_date, price FROM searched ORDER BY (positive_ratings/(positive_ratings+negative_ratings)) DESC", [search_pattern])
                 else:
-                    cursor.execute("SELECT name, release_date, price FROM steam ORDER BY (positive_ratings-negative_ratings) DESC")
+                    cursor.execute("SELECT name, release_date, price FROM steam ORDER BY (positive_ratings/(positive_ratings+negative_ratings)) DESC")
                 result = cursor.fetchall()
                 if result:
                     return render_template('result.html',
@@ -147,34 +147,90 @@ def result():
 
 @app.route("/modify", methods=['GET', 'POST'])
 def modify():
-    """Search for a specific game"""
     if request.method == 'POST':
         game_name = request.form.get('game_name', '').strip()
-        
-        if not game_name:
+    else:
+        game_name = request.args.get('game_name', '').strip()
+
+    if not game_name:
+        # Only flash if user POSTed an empty search
+        if request.method == 'POST':
             flash("Please enter the name of a game", "warning")
-            return render_template("modify.html", result=None, game_name=None)
-        
-        try:
-            with get_db_connection() as db:
-                cursor = db.cursor()
-                cursor.execute("SET search_path TO maxwell_lamb")
-                query = "SELECT name, release_date, price FROM steam WHERE name ILIKE %s ORDER BY appid"
-                search_pattern = f"%{game_name}%"
-                cursor.execute(query, [search_pattern])
-                results = cursor.fetchall()
-            
-            if results:
-                return render_template("modify.html", results=results, game_name=game_name)
-            else:
-                flash(f"No game found with name: {game_name}", "info")
-                return render_template("modify.html", results=None, game_name=game_name)
-        
-        except pg8000.Error as e:
-            flash(f"Database error: {str(e)}", "error")
-            return render_template("modify.html", results=None, game_name=None)
+        return render_template("modify.html", results=None, game_name=None)
     
-    return render_template("modify.html", results=None, game_name=None)        
+    try:
+        with get_db_connection() as db:
+            cursor = db.cursor()
+            cursor.execute("SET search_path TO maxwell_lamb")
+            query = """
+                SELECT name, positive_ratings, negative_ratings,
+                       ROUND(((positive_ratings::float/(positive_ratings+negative_ratings))*100)::numeric, 2)
+                       AS reviews
+                FROM steam
+                WHERE name ILIKE %s
+                ORDER BY appid
+            """
+            search_pattern = f"%{game_name}%"
+            cursor.execute(query, [search_pattern])
+            results = cursor.fetchall()
+
+        if results:
+            return render_template("modify.html", results=results, game_name=game_name)
+        else:
+            flash(f"No game found with name: {game_name}", "info")
+            return render_template("modify.html", results=None, game_name=game_name)
+
+    except pg8000.Error as e:
+        flash(f"Database error: {str(e)}", "error")
+        return render_template("modify.html", results=None, game_name=None)
+
+@app.route("/update_rating", methods=['POST'])
+def update_rating():
+    game_name = request.form.get("game_name")
+    field = request.form.get("field")
+
+    try:
+        with get_db_connection() as db:
+            cursor = db.cursor()
+            cursor.execute("SET search_path TO maxwell_lamb")
+
+            if field == "positive_add":
+                cursor.execute("""
+                    UPDATE steam
+                    SET positive_ratings = positive_ratings + 1
+                    WHERE name = %s
+                """, [game_name])
+
+            elif field == "positive_remove":
+                cursor.execute("""
+                    UPDATE steam
+                    SET positive_ratings = positive_ratings - 1
+                    WHERE name = %s
+                """, [game_name])
+
+            elif field == "negative_add":
+                cursor.execute("""
+                    UPDATE steam
+                    SET negative_ratings = negative_ratings + 1
+                    WHERE name = %s
+                """, [game_name])
+
+            elif field == "negative_remove":
+                cursor.execute("""
+                    UPDATE steam
+                    SET negative_ratings = negative_ratings - 1
+                    WHERE name = %s
+                """, [game_name])
+
+            db.commit()
+
+        flash(f"Updated {field.split("_")[0]} reviews for {game_name}.", "success")
+        search_term = request.form.get("search_term", game_name)
+        return redirect(url_for("modify", game_name=search_term))
+
+    except pg8000.Error as e:
+        flash(f"Database error: {str(e)}", "error")
+        return redirect(url_for("modify"))
 
 @app.errorhandler(404)
 def not_found(e):
