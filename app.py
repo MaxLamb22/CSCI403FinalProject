@@ -41,7 +41,7 @@ def home():
         with get_db_connection() as db:
             cursor = db.cursor()
             cursor.execute("SET search_path TO maxwell_lamb")
-            cursor.execute("SELECT name, release_date, price FROM steam ORDER BY name")
+            cursor.execute("SELECT name, release_date, price FROM steam ORDER BY appid")
             games = cursor.fetchall()
         
         return render_template("index.html", games=games)
