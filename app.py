@@ -1,7 +1,5 @@
-import getpass
-import pg8000 # type: ignore
+import pg8000
 import os
-import json
 from flask import Flask, render_template, request, flash, redirect, url_for
 from contextlib import contextmanager
 from dotenv import load_dotenv
@@ -95,11 +93,11 @@ def result():
         if game_name:
             search_pattern = f"%{game_name}%"
             searched = """
-                WITH searched AS (
+                    WITH searched AS (
                             SELECT name, release_date, price, positive_ratings, negative_ratings, ROUND(((positive_ratings::float/(positive_ratings+negative_ratings))*100)::numeric, 2) AS reviews
                             FROM steam 
                             WHERE name ILIKE %s
-                        )"""
+                    )"""
         
         with get_db_connection() as db:
             cursor = db.cursor()
@@ -119,7 +117,7 @@ def result():
             
             elif action == 'By Newest':
                 if game_name:
-                    cursor.execute(searched + "SELECT name, release_data, price, ROUND(((positive_ratings::float/(positive_ratings+negative_ratings))*100)::numeric, 2) AS reviews FROM searched ORDER BY release_date DESC", [search_pattern])
+                    cursor.execute(searched + "SELECT name, release_date, price, reviews FROM searched ORDER BY release_date DESC", [search_pattern])
                 else:
                     cursor.execute("SELECT name, release_date, price, ROUND(((positive_ratings::float/(positive_ratings+negative_ratings))*100)::numeric, 2) AS reviews FROM steam ORDER BY release_date DESC")
                 result = cursor.fetchall()
@@ -131,9 +129,9 @@ def result():
             elif action == 'By Rating':
                 if game_name:
                     search_pattern = f"%{game_name}%"
-                    cursor.execute(searched + "SELECT name, release_date, price, ROUND(((positive_ratings::float/(positive_ratings+negative_ratings))*100)::numeric, 2) AS reviews FROM searched ORDER BY (positive_ratings/(positive_ratings+negative_ratings)) DESC", [search_pattern])
+                    cursor.execute(searched + "SELECT name, release_date, price, reviews FROM searched ORDER BY reviews DESC", [search_pattern])
                 else:
-                    cursor.execute("SELECT name, release_date, price, ROUND(((positive_ratings::float/(positive_ratings+negative_ratings))*100)::numeric, 2) AS reviews FROM steam ORDER BY (positive_ratings/(positive_ratings+negative_ratings)) DESC")
+                    cursor.execute("SELECT name, release_date, price, ROUND(((positive_ratings::float/(positive_ratings+negative_ratings))*100)::numeric, 2) AS reviews FROM steam ORDER BY reviews DESC")
                 result = cursor.fetchall()
                 if result:
                     return render_template('result.html', games=result, last_page=last_page)
